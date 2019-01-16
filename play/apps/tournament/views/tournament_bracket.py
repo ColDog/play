@@ -2,7 +2,9 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.http import JsonResponse
 from apps.tournament.forms import TournamentBracketForm
+from apps.utils.helpers import generate_game_url
 from apps.tournament.models import Tournament, TournamentBracket, Heat, HeatGame
 from apps.authentication.decorators import admin_required
 
@@ -74,3 +76,29 @@ def run_game(request, id, heat_id, heat_game_number):
         heat_game.game.create()
         heat_game.game.run()
     return redirect(f'/games/{heat_game.game.engine_id}')
+
+
+@admin_required
+@login_required
+def player(request, id):
+    bracket = TournamentBracket.objects.get(id=id)
+
+    current_game = None
+    current_heat = None
+    current_round = bracket.latest_round
+    for heat in current_round.heats:
+        current_heat = heat
+        current_game = heat.latest_game
+        if heat.status == "running":
+            break
+
+    if request.GET.get('format') == 'json':
+        return JsonResponse({'id': current_game.game.engine_id if current_game else 'done'})
+    return render(request, 'tournament/player.html', {
+        'tournament': bracket.tournament,
+        'round': current_round,
+        'game': current_game,
+        'heat': current_heat,
+        'bracket': bracket,
+        'url': generate_game_url(current_game.game.engine_id) if current_game else None
+    })

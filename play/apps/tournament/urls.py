@@ -28,6 +28,9 @@ urlpatterns = [
         GET=tournament_views.tournament_bracket.new,
         POST=tournament_views.tournament_bracket.new,
     )),
+    url(r'^tournament/bracket/(?P<id>\w+)/player/$', method_dispatch(
+        GET=tournament_views.tournament_bracket.player,
+    )),
     url(r'^tournament/bracket/(?P<id>\w+)/edit/$', method_dispatch(
         GET=tournament_views.tournament_bracket.edit,
         POST=tournament_views.tournament_bracket.edit,
